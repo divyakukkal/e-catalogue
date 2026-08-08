@@ -12,6 +12,8 @@ const loadingMsg = document.getElementById("loadingMsg");
 const resultCount = document.getElementById("resultCount");
 const searchInput = document.getElementById("searchInput");
 const categoryFilter = document.getElementById("categoryFilter");
+const subCategoryFilter = document.getElementById("subCategoryFilter");
+const headerSubtitle = document.getElementById("headerSubtitle");
 
 async function fetchAllRecords(tableName) {
   let records = [];
@@ -78,14 +80,27 @@ function populateCategoryFilter(products) {
   });
 }
 
+function populateSubCategoryFilter(products) {
+  const allSubCats = products.flatMap(p => p.subCategories);
+  const uniqueSubCats = [...new Set(allSubCats)].filter(Boolean).sort();
+  uniqueSubCats.forEach(subCat => {
+    const option = document.createElement("option");
+    option.value = subCat;
+    option.textContent = subCat;
+    subCategoryFilter.appendChild(option);
+  });
+}
+
 function renderProducts() {
   const searchTerm = searchInput.value.trim().toLowerCase();
   const selectedCategory = categoryFilter.value;
+  const selectedSubCategory = subCategoryFilter.value;
 
   const filtered = allProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm);
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesSubCategory = !selectedSubCategory || product.subCategories.includes(selectedSubCategory);
+    return matchesSearch && matchesCategory && matchesSubCategory;
   });
 
   resultCount.textContent = `${filtered.length} product${filtered.length === 1 ? "" : "s"} found`;
@@ -131,6 +146,7 @@ function escapeHtml(str) {
 
 searchInput.addEventListener("input", renderProducts);
 categoryFilter.addEventListener("change", renderProducts);
+subCategoryFilter.addEventListener("change", renderProducts);
 
 async function init() {
   try {
@@ -145,13 +161,17 @@ async function init() {
 
     allProducts = formatProducts(productRecords, categoryMap, subCategoryMap);
     populateCategoryFilter(allProducts);
+    populateSubCategoryFilter(allProducts);
+
+    headerSubtitle.textContent = `${allProducts.length} products, curated and cross-referenced`;
+
     loadingMsg.style.display = "none";
     renderProducts();
   } catch (error) {
     loadingMsg.textContent = "Couldn't load products. Please check back later.";
+    headerSubtitle.textContent = "Catalogue temporarily unavailable";
     console.error(error);
   }
 }
 
 init();
-  
