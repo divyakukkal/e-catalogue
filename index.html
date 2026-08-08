@@ -4,18 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Miracle E-Catalogue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <header>
-    <h1>📦 Miracle E-Catalogue</h1>
-    <p class="subtitle">Browse our full product range</p>
+    <div class="brand-mark">MIRACLE</div>
+    <h1>The Catalogue</h1>
+    <p class="subtitle">299 products, curated and cross-referenced</p>
 
     <div class="controls">
-      <input type="text" id="searchInput" placeholder="🔍 Search products...">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="Search the catalogue...">
+      </div>
       <select id="categoryFilter">
-        <option value="">All Categories</option>
+        <option value="">All categories</option>
       </select>
     </div>
   </header>
@@ -29,3 +36,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+ 
