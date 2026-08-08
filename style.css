@@ -1,0 +1,154 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f5f6fa;
+  color: #333;
+}
+
+header {
+  background: linear-gradient(135deg, #b8202e 0%, #7a1420 100%);
+  color: white;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0 0 4px 0;
+  font-size: 2rem;
+}
+
+.subtitle {
+  margin: 0 0 20px 0;
+  color: #f3c7ca;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  max-width: 600px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.controls input, .controls select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.95rem;
+  flex: 1;
+  min-width: 180px;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.result-count {
+  color: #777;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.loading {
+  text-align: center;
+  color: #999;
+  padding: 60px 0;
+  font-size: 1rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+}
+
+.product-image {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.no-image {
+  color: #ccc;
+  font-size: 2.5rem;
+}
+
+.product-info {
+  padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-name {
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin: 0 0 8px 0;
+  color: #2c2c2c;
+}
+
+.product-category {
+  display: inline-block;
+  background: #fbe4e6;
+  color: #b8202e;
+  font-size: 0.72rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+
+.product-subcategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.sub-tag {
+  background: #f0f0f0;
+  color: #666;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.no-results {
+  text-align: center;
+  color: #999;
+  padding: 60px 0;
+  grid-column: 1 / -1;
+}
