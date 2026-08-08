@@ -93,7 +93,7 @@ header h1 {
 
 .controls select {
   flex: 1;
-  min-width: 160px;
+  min-width: 150px;
   cursor: pointer;
 }
 
