@@ -1,7 +1,9 @@
 // ---- Airtable connection settings ----
 const AIRTABLE_TOKEN = "patjVWplT3Tx0xUqY.bd5a714543f88802eafc51667bc414bfc6ed17bedee6a080bddad6a7d7283925";
 const BASE_ID = "appnvBGNd1VskROtg";
-const TABLE_NAME = "Products";
+const PRODUCTS_TABLE = "Products";
+const CATEGORIES_TABLE = "Categories";
+const SUBCATEGORIES_TABLE = "Sub-Categories";
 
 let allProducts = [];
 
@@ -11,12 +13,12 @@ const resultCount = document.getElementById("resultCount");
 const searchInput = document.getElementById("searchInput");
 const categoryFilter = document.getElementById("categoryFilter");
 
-async function fetchAllProducts() {
+async function fetchAllRecords(tableName) {
   let records = [];
   let offset = null;
 
   do {
-    let url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}?pageSize=100`;
+    let url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(tableName)}?pageSize=100`;
     if (offset) {
       url += `&offset=${offset}`;
     }
@@ -28,7 +30,7 @@ async function fetchAllProducts() {
     });
 
     if (!response.ok) {
-      throw new Error(`Airtable request failed: ${response.status}`);
+      throw new Error(`Airtable request failed for ${tableName}: ${response.status}`);
     }
 
     const data = await response.json();
@@ -39,14 +41,29 @@ async function fetchAllProducts() {
   return records;
 }
 
-function formatProducts(records) {
+function buildIdToNameMap(records, nameField) {
+  const map = {};
+  records.forEach(record => {
+    map[record.id] = record.fields[nameField] || "";
+  });
+  return map;
+}
+
+function formatProducts(records, categoryMap, subCategoryMap) {
   return records.map(record => {
     const fields = record.fields;
+
+    const categoryIds = fields["Category"] || [];
+    const subCategoryIds = fields["Sub-Category"] || [];
+
+    const categoryName = categoryIds.length > 0 ? categoryMap[categoryIds[0]] : "";
+    const subCategoryNames = subCategoryIds.map(id => subCategoryMap[id]).filter(Boolean);
+
     return {
       name: fields["Product Name"] || "Unnamed product",
       images: fields["Product Images"] || [],
-      category: fields["Category"] || "",
-      subCategories: fields["Sub-Category"] || []
+      category: categoryName,
+      subCategories: subCategoryNames
     };
   });
 }
@@ -78,20 +95,23 @@ function renderProducts() {
     return;
   }
 
-  productGrid.innerHTML = filtered.map(product => {
+  productGrid.innerHTML = filtered.map((product, i) => {
     const imageUrl = product.images.length > 0 ? product.images[0].url : null;
 
     const imageHtml = imageUrl
       ? `<img src="${imageUrl}" alt="${escapeHtml(product.name)}" loading="lazy">`
-      : `<span class="no-image">📦</span>`;
+      : `<span class="no-image">NO IMG</span>`;
 
     const subTagsHtml = product.subCategories
       .slice(0, 3)
       .map(tag => `<span class="sub-tag">${escapeHtml(tag)}</span>`)
       .join("");
 
+    const indexLabel = "No. " + String(i + 1).padStart(3, "0");
+
     return `
       <div class="product-card">
+        <span class="card-index">${indexLabel}</span>
         <div class="product-image">${imageHtml}</div>
         <div class="product-info">
           <p class="product-name">${escapeHtml(product.name)}</p>
@@ -114,8 +134,16 @@ categoryFilter.addEventListener("change", renderProducts);
 
 async function init() {
   try {
-    const records = await fetchAllProducts();
-    allProducts = formatProducts(records);
+    const [productRecords, categoryRecords, subCategoryRecords] = await Promise.all([
+      fetchAllRecords(PRODUCTS_TABLE),
+      fetchAllRecords(CATEGORIES_TABLE),
+      fetchAllRecords(SUBCATEGORIES_TABLE)
+    ]);
+
+    const categoryMap = buildIdToNameMap(categoryRecords, "Category Name");
+    const subCategoryMap = buildIdToNameMap(subCategoryRecords, "Sub-Category Name");
+
+    allProducts = formatProducts(productRecords, categoryMap, subCategoryMap);
     populateCategoryFilter(allProducts);
     loadingMsg.style.display = "none";
     renderProducts();
@@ -126,3 +154,4 @@ async function init() {
 }
 
 init();
+  
