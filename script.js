@@ -15,6 +15,18 @@ const categoryFilter = document.getElementById("categoryFilter");
 const subCategoryFilter = document.getElementById("subCategoryFilter");
 const headerSubtitle = document.getElementById("headerSubtitle");
 
+// Fetches ALL records from a given table, handling pagination.
+// Returns an empty array (instead of throwing) if the table doesn't exist —
+// this lets us safely "guess" a few possible table names without breaking things.
+async function fetchAllRecordsSafe(tableName) {
+  try {
+    return await fetchAllRecords(tableName);
+  } catch (error) {
+    console.warn(`Table "${tableName}" not found or inaccessible, skipping.`);
+    return [];
+  }
+}
+
 async function fetchAllRecords(tableName) {
   let records = [];
   let offset = null;
@@ -172,12 +184,20 @@ subCategoryFilter.addEventListener("change", renderProducts);
 
 async function init() {
   try {
-    const [productRecords, categoryRecords, subCategoryRecords] = await Promise.all([
+    const [productRecords, categoryRecords] = await Promise.all([
       fetchAllRecords(PRODUCTS_TABLE),
-      fetchAllRecords(CATEGORIES_TABLE),
-      fetchAllRecords(SUBCATEGORIES_TABLE)
+      fetchAllRecords(CATEGORIES_TABLE)
     ]);
 
+    // Try BOTH possible sub-category table names and merge whatever we find —
+    // this protects us from a singular-vs-plural table naming mixup
+    const [subCatPlural, subCatSingular] = await Promise.all([
+      fetchAllRecordsSafe("Sub-Categories"),
+      fetchAllRecordsSafe("Sub-Category")
+    ]);
+    const subCategoryRecords = [...subCatPlural, ...subCatSingular];
+
+    // Try a few likely name-field variants for each lookup table too
     const categoryMap = buildIdToNameMap(categoryRecords, findPrimaryFieldName(categoryRecords, ["Category Name", "Name"]));
     const subCategoryMap = buildIdToNameMap(subCategoryRecords, findPrimaryFieldName(subCategoryRecords, ["Sub-Category Name", "Name"]));
 
@@ -208,7 +228,12 @@ function findPrimaryFieldName(records, possibleNames) {
 }
 
 init();
+
  
+ 
+
+    
+
 
 
    
