@@ -53,14 +53,21 @@ async function fetchAllRecords(tableName) {
   return records;
 }
 
+// Builds a lookup map: record ID -> readable name, e.g. { "rec123": "CORRUGATED BOXES" }
+// Skips writing a blank name if the field genuinely isn't present on that record.
 function buildIdToNameMap(records, nameField) {
   const map = {};
   records.forEach(record => {
-    map[record.id] = record.fields[nameField] || "";
+    const value = record.fields[nameField];
+    if (value) {
+      map[record.id] = value;
+    }
   });
   return map;
 }
 
+// Resolves a raw Airtable field value into a clean array of readable strings,
+// no matter whether it's linked record IDs, plain text, a single string, or missing.
 function resolveToNames(rawValue, idToNameMap) {
   if (!rawValue) return [];
 
@@ -190,16 +197,26 @@ async function init() {
     ]);
 
     // Try BOTH possible sub-category table names and merge whatever we find —
-    // this protects us from a singular-vs-plural table naming mixup
+    // this protects us from a singular-vs-plural table naming mixup.
+    // IMPORTANT: build each table's ID->name map SEPARATELY (they may use
+    // different column names internally), then merge the maps — not the raw records.
     const [subCatPlural, subCatSingular] = await Promise.all([
       fetchAllRecordsSafe("Sub-Categories"),
       fetchAllRecordsSafe("Sub-Category")
     ]);
-    const subCategoryRecords = [...subCatPlural, ...subCatSingular];
 
-    // Try a few likely name-field variants for each lookup table too
+    const subCategoryMapPlural = buildIdToNameMap(
+      subCatPlural,
+      findPrimaryFieldName(subCatPlural, ["Sub-Category Name", "Name"])
+    );
+    const subCategoryMapSingular = buildIdToNameMap(
+      subCatSingular,
+      findPrimaryFieldName(subCatSingular, ["Sub-Category Name", "Name"])
+    );
+    const subCategoryMap = { ...subCategoryMapPlural, ...subCategoryMapSingular };
+
+    // Try a few likely name-field variants for the Categories table too
     const categoryMap = buildIdToNameMap(categoryRecords, findPrimaryFieldName(categoryRecords, ["Category Name", "Name"]));
-    const subCategoryMap = buildIdToNameMap(subCategoryRecords, findPrimaryFieldName(subCategoryRecords, ["Sub-Category Name", "Name"]));
 
     allProducts = formatProducts(productRecords, categoryMap, subCategoryMap);
     populateCategoryFilter(allProducts);
@@ -216,6 +233,8 @@ async function init() {
   }
 }
 
+// Looks at the first record of a table and figures out which of the
+// possible field names actually exists, so small naming differences don't break things
 function findPrimaryFieldName(records, possibleNames) {
   if (records.length === 0) return possibleNames[0];
   const sampleFields = records[0].fields;
@@ -228,12 +247,7 @@ function findPrimaryFieldName(records, possibleNames) {
 }
 
 init();
-
  
- 
-
-    
+  
 
 
-
-   
