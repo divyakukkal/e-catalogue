@@ -26,9 +26,7 @@ async function fetchAllRecords(tableName) {
     }
 
     const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_TOKEN}`
-      }
+      headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
     });
 
     if (!response.ok) {
@@ -51,20 +49,44 @@ function buildIdToNameMap(records, nameField) {
   return map;
 }
 
+function resolveToNames(rawValue, idToNameMap) {
+  if (!rawValue) return [];
+
+  const valuesArray = Array.isArray(rawValue) ? rawValue : [rawValue];
+
+  return valuesArray
+    .map(value => {
+      if (idToNameMap && Object.prototype.hasOwnProperty.call(idToNameMap, value)) {
+        return idToNameMap[value];
+      }
+      return value;
+    })
+    .filter(Boolean);
+}
+
+function getFieldValue(fields, possibleNames) {
+  for (const name of possibleNames) {
+    if (fields[name] !== undefined && fields[name] !== null && fields[name] !== "") {
+      return fields[name];
+    }
+  }
+  return null;
+}
+
 function formatProducts(records, categoryMap, subCategoryMap) {
   return records.map(record => {
     const fields = record.fields;
 
-    const categoryIds = fields["Category"] || [];
-    const subCategoryIds = fields["Sub-Category"] || [];
+    const rawCategory = getFieldValue(fields, ["Category", "Categories"]);
+    const rawSubCategory = getFieldValue(fields, ["Sub-Category", "Sub-Categories", "Subcategory", "Subcategories"]);
 
-    const categoryName = categoryIds.length > 0 ? categoryMap[categoryIds[0]] : "";
-    const subCategoryNames = subCategoryIds.map(id => subCategoryMap[id]).filter(Boolean);
+    const categoryNames = resolveToNames(rawCategory, categoryMap);
+    const subCategoryNames = resolveToNames(rawSubCategory, subCategoryMap);
 
     return {
       name: fields["Product Name"] || "Unnamed product",
       images: fields["Product Images"] || [],
-      category: categoryName,
+      category: categoryNames[0] || "",
       subCategories: subCategoryNames
     };
   });
@@ -156,8 +178,8 @@ async function init() {
       fetchAllRecords(SUBCATEGORIES_TABLE)
     ]);
 
-    const categoryMap = buildIdToNameMap(categoryRecords, "Category Name");
-    const subCategoryMap = buildIdToNameMap(subCategoryRecords, "Sub-Category Name");
+    const categoryMap = buildIdToNameMap(categoryRecords, findPrimaryFieldName(categoryRecords, ["Category Name", "Name"]));
+    const subCategoryMap = buildIdToNameMap(subCategoryRecords, findPrimaryFieldName(subCategoryRecords, ["Sub-Category Name", "Name"]));
 
     allProducts = formatProducts(productRecords, categoryMap, subCategoryMap);
     populateCategoryFilter(allProducts);
@@ -174,4 +196,19 @@ async function init() {
   }
 }
 
+function findPrimaryFieldName(records, possibleNames) {
+  if (records.length === 0) return possibleNames[0];
+  const sampleFields = records[0].fields;
+  for (const name of possibleNames) {
+    if (Object.prototype.hasOwnProperty.call(sampleFields, name)) {
+      return name;
+    }
+  }
+  return possibleNames[0];
+}
+
 init();
+ 
+
+
+   
